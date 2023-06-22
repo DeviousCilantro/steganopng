@@ -1,5 +1,5 @@
 use std::env;
-use crate::args::Command;
+use crate::args::Args;
 use crate::chunk_type::ChunkType;
 use deoxys::{
     aead::{Aead, KeyInit, OsRng},
@@ -11,6 +11,8 @@ use rand::Rng;
 use generic_array::GenericArray;
 use generic_array::typenum::U32;
 use std::str::FromStr;
+use std::process::Command;
+use std::path::Path;
 
 mod args;
 mod chunk;
@@ -24,14 +26,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for (index, argument) in env::args().enumerate() {
         if index == 0 { continue; }
-
         if index == 1 { action = argument.clone() };
-
         if index == 3 { assert!(ChunkType::from_str(&argument)?.is_valid()) };
-
         if index > 1 {
             application_args.push(argument.clone());
         }
+    }
+
+    if application_args.len() < 2 || application_args.len() > 3 {
+        return Err("Invalid number of arguments supplied".into());
+    }
+
+    let input = application_args[0].clone();
+    
+
+    if input.contains("://") {
+        let file_name;
+        let delimiter = "/";
+        if let Some(index) = input.rfind(delimiter) {
+            file_name = input[(index + delimiter.len())..].to_string();
+        } else {
+            return Err("Invalid URL path".into());
+        }
+        if Command::new("wget")
+        .arg("-q")
+        .arg("-O")
+        .arg(&file_name)
+        .arg(input)
+        .output()
+        .is_err() {
+            return Err("Failed to fetch image from URL".into());
+        };
+        application_args[0] = file_name;
+    }
+
+    if !(Path::new(&application_args[0]).is_file()) {
+        return Err("File not found".into());
     }
 
     if action == "encode" {
@@ -56,11 +86,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
             "N" | "n" => {
             },
-            _ => println!("Invalid input."),
+            _ => return Err("Invalid input".into()),
         };
     }
 
-    Command::new(&action, &application_args).execute()?;
+    Args::new(&action, &application_args).execute()?;
 
     Ok(())
 }

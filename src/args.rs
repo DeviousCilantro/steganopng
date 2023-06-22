@@ -12,7 +12,7 @@ use deoxys::{
     DeoxysII256,
 };
 
-pub enum Command {
+pub enum Args {
     Encode {
         file_path: String,
         chunk_type: ChunkType,
@@ -32,7 +32,7 @@ pub enum Command {
     },
 }
 
-impl Command {
+impl Args {
     pub fn new(command: &str, args: &[String]) -> Self {
         match command {
             "encode" => {
