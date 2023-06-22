@@ -88,7 +88,7 @@ impl Command {
                     let mut file = File::create(output_file.clone().unwrap())?;
                     file.write_all(&output)?;
                 } else {
-                    assert!(png.chunk_by_type(&String::from_utf8(chunk_type.bytes().to_vec()).unwrap()).is_none(), "Chunk already exists");
+                    assert!(png.chunk_by_type(&String::from_utf8(chunk_type.bytes().to_vec()).unwrap()).is_some(), "Chunk already exists");
                     let mut file = File::create(file_path)?;
                     file.write_all(&output)?;
                 }
